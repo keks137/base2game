@@ -46,8 +46,13 @@ void DrawGameGrid() {
       char number[30];
 
       sprintf(number, "%d", gameGrid[x][y]);
+      if(*number == '0'){
+
+      }
+      else{
       DrawText(number, GAMEBOX_X + x * CELL_WIDTH + CELL_WIDTH/2, GAMEBOX_Y + y * CELL_HEIGHT + CELL_HEIGHT/2,
                20, BLACK);
+      }
     }
   }
 }
