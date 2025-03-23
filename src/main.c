@@ -1,15 +1,16 @@
 #include "constants.h"
 #include <raylib.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 enum {
-  c_lightgray,
-  c_orange,
-  c_pink,
-  c_green,
-  c_lime,
-  c_babyblue,
-  c_blue,
+  c_lightgray = 0,
+  c_orange = 2,
+  c_pink = 4,
+  c_green = 8,
+  c_lime = 16,
+  c_babyblue = 32,
+  c_blue = 64,
 } Colors;
 
 Color map_color(int power) {
@@ -42,6 +43,11 @@ void DrawGameGrid() {
     for (int x = 0; x < GRID_COLS; x++) {
       DrawRectangle(GAMEBOX_X + x * CELL_WIDTH, GAMEBOX_Y + y * CELL_HEIGHT,
                     CELL_WIDTH, CELL_HEIGHT, map_color(gameGrid[x][y]));
+      char number[30];
+
+      sprintf(number, "%d", gameGrid[x][y]);
+      DrawText(number, GAMEBOX_X + x * CELL_WIDTH + CELL_WIDTH/2, GAMEBOX_Y + y * CELL_HEIGHT + CELL_HEIGHT/2,
+               20, BLACK);
     }
   }
 }
@@ -53,7 +59,7 @@ void MoveRight() {
       if (gameGrid[x][y] != 0) {
         int val = gameGrid[x][y];
         if (gameGrid[x + 1][y] == val && x + 1 < GRID_COLS) {
-          val += 1;
+          val *= 2;
           gameGrid[x][y] = 0;
           gameGrid[x + 1][y] = val;
           somethingMoved = true;
@@ -73,7 +79,7 @@ void MoveLeft() {
       if (gameGrid[x][y] != 0) {
         int val = gameGrid[x][y];
         if (gameGrid[x - 1][y] == val && x - 1 >= 0) {
-          val += 1;
+          val *= 2;
           gameGrid[x][y] = 0;
           gameGrid[x - 1][y] = val;
           somethingMoved = true;
@@ -93,7 +99,7 @@ void MoveUp() {
       if (gameGrid[x][y] != 0) {
         int val = gameGrid[x][y];
         if (gameGrid[x][y - 1] == val && y - 1 >= 0) {
-          val += 1;
+          val *= 2;
           gameGrid[x][y] = 0;
           gameGrid[x][y - 1] = val;
           somethingMoved = true;
@@ -113,7 +119,7 @@ void MoveDown() {
       if (gameGrid[x][y] != 0) {
         int val = gameGrid[x][y];
         if (gameGrid[x][y + 1] == val && y + 1 < GRID_ROWS) {
-          val += 1;
+          val *= 2;
           gameGrid[x][y] = 0;
           gameGrid[x][y + 1] = val;
           somethingMoved = true;
@@ -154,7 +160,7 @@ void SpawnRandomTile() {
   if (gameGrid[x][y] == 0) {
     // TODO: actual random
 
-    gameGrid[x][y] = GetRandomValue(1, 1);
+    gameGrid[x][y] = GetRandomValue(2, 2);
   }
 }
 
