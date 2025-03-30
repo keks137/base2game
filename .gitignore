@@ -1,56 +1,34 @@
-# Compiled Object files
-**/.DS_Store
-*.slo
-*.lo
-*.o
-*.obj
+# Gradle files
+.gradle/
+build/
 
-# Precompiled Headers
-*.gch
-*.pch
+# Local configuration file (sdk path, etc)
+local.properties
 
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
+# Log/OS Files
+*.log
 
-# Fortran module files
-*.mod
-*.smod
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
 
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
+# IntelliJ
+*.iml
+.idea/
+!.idea/compiler.xml
+!.idea/gradle.xml
+!.idea/misc.xml
+!.idea/vcs.xml
 
-# Executables
-*.exe
-*.out
-*.app
-2048
+# Keystore files
+*.jks
+*.keystore
 
-**/cmake-build-debug
-**/CMakeCache.txt
-**/cmake_install.cmake
-**/install_manifest.txt
-**/CMakeFiles/
-**/CTestTestfile.cmake
-**/Makefile
-**/*.cbp
-**/CMakeScripts
-**/compile_commands.json
+# Google Services (e.g. APIs or Firebase)
+google-services.json
 
-include/divisible/*
-
-
-## Local 
-
-.idea/*.xml
-
-build/**/*
-
-include/*
-lib/*
-bin/*
-test/test_runner
+# Android Profiling
+*.hprof
