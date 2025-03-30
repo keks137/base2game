@@ -1,4 +1,5 @@
 #include "constants.h"
+#include "funny_math.h"
 #include <memory.h>
 #include <raylib.h>
 #include <stdbool.h>
@@ -7,12 +8,17 @@
 
 enum {
     c_lightgray = 0,
+    c_dusty_purple = 16,
     c_orange = 2,
-    c_pink = 4,
-    c_green = 8,
-    c_lime = 16,
+    c_pink = 8,
+    c_red = 4,
     c_babyblue = 32,
     c_blue = 64,
+    c_ocean = 128,
+    c_jade = 256,
+    c_green = 512,
+    c_lime = 1024,
+    c_yellow = 2048,
 } Colors;
 
 #define MAX_GESTURE_STRINGS 20
@@ -42,8 +48,12 @@ Color map_color(int power) {
     switch (power) {
     case c_lightgray:
         return LIGHTGRAY;
+    case c_dusty_purple:
+        return (Color){160, 81, 149, 255};
     case c_orange:
         return ORANGE;
+    case c_red:
+        return RED;
     case c_pink:
         return PINK;
     case c_green:
@@ -54,6 +64,12 @@ Color map_color(int power) {
         return (Color){137, 207, 240, 255};
     case c_blue:
         return BLUE;
+    case c_ocean:
+        return (Color){0, 0, 128, 255};
+    case c_jade:
+        return (Color){81, 160, 126, 255};
+    case c_yellow:
+        return YELLOW;
     default:
         return PURPLE;
     };
@@ -83,6 +99,7 @@ int moveList[19];
 float moveSpeed = 1.0;
 
 void SpawnRandomTile();
+void setScreenSizes();
 
 static inline float lerp(float v0, float v1, int elapsed) {
     return (v0 - v1) * elapsed * moveSpeed;
@@ -143,18 +160,22 @@ void getMoveList(int dir) {
 void DrawGameGrid() {
     for (int y = 0; y < GRID_ROWS; y++) {
         for (int x = 0; x < GRID_COLS; x++) {
+            int val = gameGrid[x][y].val;
             DrawRectangle(Gamebox_X + x * Cell_Width,
                           Gamebox_Y + y * Cell_Height, Cell_Width, Cell_Height,
-                          map_color(gameGrid[x][y].val));
+                          map_color(val));
             char number[30];
 
-            sprintf(number, "%d", gameGrid[x][y].val);
+            sprintf(number, "%d", val);
             if (*number == '0') {
 
             } else {
-                DrawText(number, Gamebox_X + x * Cell_Width + Cell_Width / 2,
-                         Gamebox_Y + y * Cell_Height + Cell_Height / 2, 20,
-                         BLACK);
+                int fontSize = (Cell_Width) / MAX_DIGITS;
+                int textWidth = MeasureText(number, fontSize);
+                int posX = x + (Cell_Width - textWidth) / 2;
+                int posY = y + (Cell_Width - fontSize) / 2;
+                DrawText(number, Gamebox_X + x * Cell_Width + posX,
+                         Gamebox_Y + y * Cell_Height + posY, fontSize, BLACK);
             }
         }
     }
@@ -331,6 +352,9 @@ void ProcessInput() {
     if (downInput()) {
         MoveDown();
     }
+    if (IsKeyPressed(KEY_F12)) {
+        setScreenSizes();
+    }
     if (somethingMoved) {
         SpawnRandomTile();
     }
@@ -379,6 +403,14 @@ void setScreenSizes() {
     touchArea.height = Screen_Height - 20.0f;
 }
 
+void drawAllTiles() {
+    for (int x = 0; x < GRID_COLS; x++) {
+        for (int y = 0; y < GRID_ROWS; y++) {
+            gameGrid[x][y].val = powerOfTwo(x + y * GRID_COLS);
+        }
+    }
+}
+
 int main() {
     // randomSeed = time(NULL);  // not need for some reason???
     // printf("seed: %i\n", randomSeed);
@@ -389,6 +421,8 @@ int main() {
     setScreenSizes(); // set actual values
 
     SetTargetFPS(60);
+
+    // drawAllTiles();
 
     SpawnRandomTile();
     SpawnRandomTile();
