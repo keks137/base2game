@@ -3,6 +3,7 @@
 #include <raylib.h>
 #include <stdbool.h>
 #include <stdio.h>
+// #include <time.h>
 
 enum {
     c_lightgray = 0,
@@ -16,8 +17,18 @@ enum {
 
 #define MAX_GESTURE_STRINGS 20
 
+unsigned int Screen_Width = 100;
+unsigned int Screen_Height = 100;
+unsigned int Gamebox_Width = 0;
+unsigned int Gamebox_Height = 0;
+unsigned int Gamebox_X = 100;
+unsigned int Gamebox_Y = 100;
+unsigned int Cell_Width = 0;
+unsigned int Cell_Height = 0;
+
+unsigned int randomSeed = 47060;
 Vector2 touchPosition = {0, 0};
-Rectangle touchArea = {220, 10, SCREEN_WIDTH - 230.0f, SCREEN_HEIGHT - 20.0f};
+Rectangle touchArea = {0, 0, 0, 0};
 
 int gesturesCount = 0;
 char gestureStrings[MAX_GESTURE_STRINGS][32];
@@ -132,8 +143,8 @@ void getMoveList(int dir) {
 void DrawGameGrid() {
     for (int y = 0; y < GRID_ROWS; y++) {
         for (int x = 0; x < GRID_COLS; x++) {
-            DrawRectangle(GAMEBOX_X + x * CELL_WIDTH,
-                          GAMEBOX_Y + y * CELL_HEIGHT, CELL_WIDTH, CELL_HEIGHT,
+            DrawRectangle(Gamebox_X + x * Cell_Width,
+                          Gamebox_Y + y * Cell_Height, Cell_Width, Cell_Height,
                           map_color(gameGrid[x][y].val));
             char number[30];
 
@@ -141,8 +152,8 @@ void DrawGameGrid() {
             if (*number == '0') {
 
             } else {
-                DrawText(number, GAMEBOX_X + x * CELL_WIDTH + CELL_WIDTH / 2,
-                         GAMEBOX_Y + y * CELL_HEIGHT + CELL_HEIGHT / 2, 20,
+                DrawText(number, Gamebox_X + x * Cell_Width + Cell_Width / 2,
+                         Gamebox_Y + y * Cell_Height + Cell_Height / 2, 20,
                          BLACK);
             }
         }
@@ -332,27 +343,53 @@ void SpawnRandomTile() {
     }
     int cellIndex = GetRandomValue(0, emptyCount);
 
-    int cellValue = 1;
+    int cellValue = 2;
     if (GetRandomValue(1, 10) == 10) {
-        cellValue = 2;
+        cellValue = 4;
     }
 
     gameGrid[emptyTiles[cellIndex].x][emptyTiles[cellIndex].y].val = cellValue;
 }
 
+void setScreenSizes() {
+    Screen_Width = GetScreenWidth();
+    Screen_Height = GetScreenHeight();
+    printf("ScreenWidth1: %i\n", Screen_Width);
+
+    Gamebox_Width = Screen_Width - Screen_Width / 10;
+    Gamebox_Height = Screen_Height - Screen_Height / 10;
+    printf("BoxWidth1: %i\n", Gamebox_Width);
+
+    if (Gamebox_Width > Gamebox_Height) {
+        Gamebox_Width = Gamebox_Height;
+    } else {
+        Gamebox_Height = Gamebox_Width;
+    }
+    printf("BoxWidth2: %i\n", Gamebox_Width);
+
+    Cell_Width = Gamebox_Width / GRID_COLS;
+    Cell_Height = Gamebox_Height / GRID_ROWS;
+
+    Gamebox_X = Screen_Width / 2 - Gamebox_Width / 2;
+    Gamebox_Y = Screen_Height / 2 - Gamebox_Height / 2;
+
+    touchArea.x = 220;
+    touchArea.y = 10;
+    touchArea.width = Screen_Width - 230.0f;
+    touchArea.height = Screen_Height - 20.0f;
+}
+
 int main() {
-    InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "2048");
+    // randomSeed = time(NULL);  // not need for some reason???
+    // printf("seed: %i\n", randomSeed);
+    SetRandomSeed(randomSeed);
+
+    setScreenSizes(); // init to something
+    InitWindow(Screen_Width, Screen_Height, "2048");
+    setScreenSizes(); // set actual values
 
     SetTargetFPS(60);
 
-    SetRandomSeed(47060);
-
-    SpawnRandomTile();
-    SpawnRandomTile();
-    SpawnRandomTile();
-    SpawnRandomTile();
-    SpawnRandomTile();
-    SpawnRandomTile();
     SpawnRandomTile();
     SpawnRandomTile();
 
