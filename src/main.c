@@ -94,13 +94,21 @@ typedef struct Tile {
     bool merged;
 } Tile;
 
+typedef struct Moveable {
+    bool left;
+    bool right;
+    bool up;
+    bool down;
+    bool any;
+} Moveable;
+
 Tile gameGrid[GRID_COLS][GRID_ROWS] = {0};
 static Pos emptyTiles[GRID_ROWS * GRID_COLS] = {0};
 unsigned int emptyCount = GRID_ROWS * GRID_COLS;
 
 int moveList[19];
 
-bool somethingMoved = false;
+Moveable isMoveable = {true, true, true, true};
 
 float moveSpeed = 1.0;
 
@@ -198,19 +206,16 @@ void MoveRight() {
                     gameGrid[writePos][y].val = prevVal * 2;
                     prevVal = -1;
                     writePos--;
-                    somethingMoved = true;
                 } else {
                     gameGrid[writePos][y].val = prevVal;
                     prevVal = gameGrid[x][y].val;
                     writePos--;
-                    somethingMoved = true;
                 }
             }
         }
         if (prevVal != -1) {
             gameGrid[writePos][y].val = prevVal;
             writePos--;
-            somethingMoved = true;
         }
         // Fill remaining cells with 0
         while (writePos >= 0) {
@@ -232,22 +237,19 @@ void MoveLeft() {
                     gameGrid[writePos][y].val = prevVal * 2;
                     prevVal = -1;
                     writePos++;
-                    somethingMoved = true;
                 } else {
                     gameGrid[writePos][y].val = prevVal;
                     prevVal = gameGrid[x][y].val;
                     writePos++;
-                    somethingMoved = true;
                 }
             }
         }
         if (prevVal != -1) {
             gameGrid[writePos][y].val = prevVal;
             writePos++;
-            somethingMoved = true;
         }
         // Fill remaining cells with 0
-        while (writePos < GRID_ROWS) {
+        while (writePos < GRID_COLS) {
             gameGrid[writePos][y].val = 0;
             writePos++;
         }
@@ -266,19 +268,16 @@ void MoveUp() {
                     gameGrid[x][writePos].val = prevVal * 2;
                     prevVal = -1;
                     writePos++;
-                    somethingMoved = true;
                 } else {
                     gameGrid[x][writePos].val = prevVal;
                     prevVal = gameGrid[x][y].val;
                     writePos++;
-                    somethingMoved = true;
                 }
             }
         }
         if (prevVal != -1) {
             gameGrid[x][writePos].val = prevVal;
             writePos++;
-            somethingMoved = true;
         }
         // Fill remaining cells with 0
         while (writePos < GRID_ROWS) {
@@ -300,19 +299,16 @@ void MoveDown() {
                     gameGrid[x][writePos].val = prevVal * 2;
                     prevVal = -1;
                     writePos--;
-                    somethingMoved = true;
                 } else {
                     gameGrid[x][writePos].val = prevVal;
                     prevVal = gameGrid[x][y].val;
                     writePos--;
-                    somethingMoved = true;
                 }
             }
         }
         if (prevVal != -1) {
             gameGrid[x][writePos].val = prevVal;
             writePos--;
-            somethingMoved = true;
         }
         // Fill remaining cells with 0
         while (writePos >= 0) {
@@ -396,28 +392,133 @@ bool downInput() {
            IsKeyPressed(KEY_S) || currentGesture == GESTURE_SWIPE_DOWN;
 }
 
-void ProcessInput() {
+void autoMovement() {
+    static int autoMove = 0;
+    // printf("Automove: %i\n", autoMove);
+    if (autoMove == 1) {
+        MoveLeft();
+        autoMove = 0;
+    } else if (autoMove == 0) {
+        MoveDown();
+        autoMove = 1;
+    }
+}
+
+bool moveableUp() {
+    for (int x = 0; x < GRID_COLS; x++) {
+        int prevVal = gameGrid[x][0].val;
+        for (int y = 1; y < GRID_ROWS; y++) {
+            int cellVal = gameGrid[x][y].val;
+            if (cellVal == 0) {
+                prevVal = 0;
+                continue;
+            }
+            if (prevVal == 0 || prevVal == cellVal) {
+                return true;
+            }
+            prevVal = cellVal;
+        }
+    }
+    return false;
+}
+bool moveableDown() {
+    for (int x = 0; x < GRID_COLS; x++) {
+        int prevVal = gameGrid[x][GRID_ROWS - 1].val;
+        for (int y = GRID_ROWS - 2; y >= 0; y--) {
+            int cellVal = gameGrid[x][y].val;
+            if (cellVal == 0) {
+                prevVal = 0;
+                continue;
+            }
+            if (prevVal == 0 || prevVal == cellVal) {
+                return true;
+            }
+            prevVal = cellVal;
+        }
+    }
+    return false;
+}
+bool moveableLeft() {
+    for (int y = 0; y < GRID_ROWS; y++) {
+        int prevVal = gameGrid[0][y].val;
+        for (int x = 1; x < GRID_COLS; x++) {
+            int cellVal = gameGrid[x][y].val;
+            if (cellVal == 0) {
+                prevVal = 0;
+                continue;
+            }
+            if (prevVal == 0 || prevVal == cellVal) {
+                return true;
+            }
+            prevVal = cellVal;
+        }
+    }
+    return false;
+}
+bool moveableRight() {
+    for (int y = 0; y < GRID_ROWS; y++) {
+        int prevVal = gameGrid[GRID_COLS - 1][y].val;
+        for (int x = GRID_COLS - 2; x >= 0; x--) {
+            int cellVal = gameGrid[x][y].val;
+            if (cellVal == 0) {
+                prevVal = 0;
+                continue;
+            }
+            if (prevVal == 0 || prevVal == cellVal) {
+                return true;
+            }
+            prevVal = cellVal;
+        }
+    }
+    return false;
+}
+
+void processMoveable() {
+    isMoveable.up = moveableUp();
+    isMoveable.down = moveableDown();
+    isMoveable.left = moveableLeft();
+    isMoveable.right = moveableRight();
+    isMoveable.any =
+        isMoveable.up || isMoveable.down || isMoveable.left || isMoveable.right;
+
+    /*
+    printf("moveableUp: %i\n", isMoveable.up);
+    printf("moveableDown: %i\n", isMoveable.down);
+    printf("moveableLeft: %i\n", isMoveable.left);
+    printf("moveableRight: %i\n", isMoveable.right);
+    printf("moveableany: %i\n", isMoveable.any);
+    */
+}
+
+void processInput() {
     getGesture();
 
-    somethingMoved = false;
-    if (rightInput()) {
+    bool somethingMoved = false;
+    if (rightInput() && isMoveable.right) {
         MoveRight();
-    } else if (leftInput()) {
+        somethingMoved = true;
+    } else if (leftInput() && isMoveable.left) {
         MoveLeft();
-    } else if (upInput()) {
+        somethingMoved = true;
+    } else if (upInput() && isMoveable.up) {
         MoveUp();
-    } else if (downInput()) {
+        somethingMoved = true;
+    } else if (downInput() && isMoveable.down) {
         MoveDown();
-    } else if (IsKeyPressed(KEY_F12)) {
+        somethingMoved = true;
+    }
+    if (IsKeyPressed(KEY_F12)) {
         setScreenSizes();
     }
+
     if (somethingMoved) {
         SpawnRandomTile();
     }
 }
 
 void SpawnRandomTile() {
-    // printf("Empty: %i\n", emptyCount);
+    getEmptyTiles();
+    //printf("Empty: %i\n", emptyCount);
     if (emptyCount == 0) {
         return;
     }
@@ -468,7 +569,7 @@ void drawAllTiles() {
 }
 
 void processGameOver() {
-    if (emptyCount == 0) {
+    if (!isMoveable.any) {
         Game_Over = true;
     }
 }
@@ -492,8 +593,8 @@ int main() {
     while (!WindowShouldClose()) {
         float delta = GetFrameTime();
 
-        getEmptyTiles();
-        ProcessInput();
+        processMoveable();
+        processInput();
         processGameOver();
         BeginDrawing();
 
