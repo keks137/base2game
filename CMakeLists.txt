@@ -1,7 +1,8 @@
+cmake_minimum_required(VERSION 4.0)
+
 project(2048 C)
 
 
-cmake_minimum_required(VERSION 4.0)
 
 set( 2048_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR} )
 set( 2048_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR} )
