@@ -36,6 +36,8 @@ unsigned int randomSeed = 47060;
 Vector2 touchPosition = {0, 0};
 Rectangle touchArea = {0, 0, 0, 0};
 
+bool Game_Over = false;
+
 int gesturesCount = 0;
 char gestureStrings[MAX_GESTURE_STRINGS][32];
 
@@ -89,12 +91,16 @@ typedef struct Anim {
 typedef struct Tile {
     int val;
     Anim *anim;
+    bool merged;
 } Tile;
 
 Tile gameGrid[GRID_COLS][GRID_ROWS] = {0};
-static Pos emptyTiles[GRID_ROWS + GRID_COLS] = {0};
+static Pos emptyTiles[GRID_ROWS * GRID_COLS] = {0};
+unsigned int emptyCount = GRID_ROWS * GRID_COLS;
 
 int moveList[19];
+
+bool somethingMoved = false;
 
 float moveSpeed = 1.0;
 
@@ -105,8 +111,8 @@ static inline float lerp(float v0, float v1, int elapsed) {
     return (v0 - v1) * elapsed * moveSpeed;
 }
 
-int getEmptyTiles() {
-    int emptyCount = 0;
+void getEmptyTiles() {
+    emptyCount = 0;
     memset(emptyTiles, 0, sizeof(emptyTiles));
 
     // [0] = number of empty, rest = indeces
@@ -120,7 +126,6 @@ int getEmptyTiles() {
             }
         }
     }
-    return emptyCount;
 }
 
 void getMovesLeft() {
@@ -175,93 +180,148 @@ void DrawGameGrid() {
                 int posX = x + (Cell_Width - textWidth) / 2;
                 int posY = y + (Cell_Width - fontSize) / 2;
                 DrawText(number, Gamebox_X + x * Cell_Width + posX,
-                         Gamebox_Y + y * Cell_Height + posY, fontSize, BLACK);
+                         Gamebox_Y + y * Cell_Height + posY, fontSize, WHITE);
             }
         }
     }
 }
 
-bool somethingMoved = false;
 void MoveRight() {
     for (int y = 0; y < GRID_ROWS; y++) {
-        for (int x = GRID_COLS; x >= 0; x--) {
+        int writePos = GRID_COLS - 1;
+        int prevVal = -1;
+        for (int x = GRID_COLS - 1; x >= 0; x--) {
             if (gameGrid[x][y].val != 0) {
-                int val = gameGrid[x][y].val;
-                if (gameGrid[x + 1][y].val == val && x + 1 < GRID_COLS) {
-                    val *= 2;
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x + 1][y].val = val;
+                if (prevVal == -1) {
+                    prevVal = gameGrid[x][y].val;
+                } else if (prevVal == gameGrid[x][y].val) {
+                    gameGrid[writePos][y].val = prevVal * 2;
+                    prevVal = -1;
+                    writePos--;
                     somethingMoved = true;
-                } else if (gameGrid[x + 1][y].val == 0 && x + 1 < GRID_COLS) {
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x + 1][y].val = val;
+                } else {
+                    gameGrid[writePos][y].val = prevVal;
+                    prevVal = gameGrid[x][y].val;
+                    writePos--;
                     somethingMoved = true;
-                    y--;
                 }
             }
         }
+        if (prevVal != -1) {
+            gameGrid[writePos][y].val = prevVal;
+            writePos--;
+            somethingMoved = true;
+        }
+        // Fill remaining cells with 0
+        while (writePos >= 0) {
+            gameGrid[writePos][y].val = 0;
+            writePos--;
+        }
     }
 }
+
 void MoveLeft() {
-    for (int y = 0; y < GRID_ROWS; y++) {
+    for (int y = GRID_ROWS - 1; y >= 0; y--) {
+        int writePos = 0;
+        int prevVal = -1;
         for (int x = 0; x < GRID_COLS; x++) {
             if (gameGrid[x][y].val != 0) {
-                int val = gameGrid[x][y].val;
-                if (gameGrid[x - 1][y].val == val && x - 1 >= 0) {
-                    val *= 2;
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x - 1][y].val = val;
+                if (prevVal == -1) {
+                    prevVal = gameGrid[x][y].val;
+                } else if (prevVal == gameGrid[x][y].val) {
+                    gameGrid[writePos][y].val = prevVal * 2;
+                    prevVal = -1;
+                    writePos++;
                     somethingMoved = true;
-                } else if (gameGrid[x - 1][y].val == 0 && x - 1 >= 0) {
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x - 1][y].val = val;
+                } else {
+                    gameGrid[writePos][y].val = prevVal;
+                    prevVal = gameGrid[x][y].val;
+                    writePos++;
                     somethingMoved = true;
-                    y--;
                 }
             }
         }
+        if (prevVal != -1) {
+            gameGrid[writePos][y].val = prevVal;
+            writePos++;
+            somethingMoved = true;
+        }
+        // Fill remaining cells with 0
+        while (writePos < GRID_COLS) {
+            gameGrid[writePos][y].val = 0;
+            writePos++;
+        }
     }
 }
+
 void MoveUp() {
-    for (int x = 0; x < GRID_COLS; x++) {
+    for (int x = GRID_COLS - 1; x >= 0; x--) {
+        int writePos = 0;
+        int prevVal = -1;
         for (int y = 0; y < GRID_ROWS; y++) {
             if (gameGrid[x][y].val != 0) {
-                int val = gameGrid[x][y].val;
-                if (gameGrid[x][y - 1].val == val && y - 1 >= 0) {
-                    val *= 2;
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x][y - 1].val = val;
+                if (prevVal == -1) {
+                    prevVal = gameGrid[x][y].val;
+                } else if (prevVal == gameGrid[x][y].val) {
+                    gameGrid[x][writePos].val = prevVal * 2;
+                    prevVal = -1;
+                    writePos++;
                     somethingMoved = true;
-                } else if (gameGrid[x][y - 1].val == 0 && y - 1 >= 0) {
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x][y - 1].val = val;
+                } else {
+                    gameGrid[x][writePos].val = prevVal;
+                    prevVal = gameGrid[x][y].val;
+                    writePos++;
                     somethingMoved = true;
-                    x--;
                 }
             }
         }
+        if (prevVal != -1) {
+            gameGrid[x][writePos].val = prevVal;
+            writePos++;
+            somethingMoved = true;
+        }
+        // Fill remaining cells with 0
+        while (writePos < GRID_ROWS) {
+            gameGrid[x][writePos].val = 0;
+            writePos++;
+        }
     }
 }
+
 void MoveDown() {
     for (int x = 0; x < GRID_COLS; x++) {
-        for (int y = GRID_ROWS; y >= 0; y--) {
+        int writePos = GRID_ROWS - 1;
+        int prevVal = -1;
+        for (int y = GRID_ROWS - 1; y >= 0; y--) {
             if (gameGrid[x][y].val != 0) {
-                int val = gameGrid[x][y].val;
-                if (gameGrid[x][y + 1].val == val && y + 1 < GRID_ROWS) {
-                    val *= 2;
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x][y + 1].val = val;
+                if (prevVal == -1) {
+                    prevVal = gameGrid[x][y].val;
+                } else if (prevVal == gameGrid[x][y].val) {
+                    gameGrid[x][writePos].val = prevVal * 2;
+                    prevVal = -1;
+                    writePos--;
                     somethingMoved = true;
-                } else if (gameGrid[x][y + 1].val == 0 && y + 1 < GRID_ROWS) {
-                    gameGrid[x][y].val = 0;
-                    gameGrid[x][y + 1].val = val;
+                } else {
+                    gameGrid[x][writePos].val = prevVal;
+                    prevVal = gameGrid[x][y].val;
+                    writePos--;
                     somethingMoved = true;
-                    x--;
                 }
             }
         }
+        if (prevVal != -1) {
+            gameGrid[x][writePos].val = prevVal;
+            writePos--;
+            somethingMoved = true;
+        }
+        // Fill remaining cells with 0
+        while (writePos >= 0) {
+            gameGrid[x][writePos].val = 0;
+            writePos--;
+        }
     }
 }
+
 void getGesture() {
     lastGesture = currentGesture;
     currentGesture = GetGestureDetected();
@@ -342,17 +402,13 @@ void ProcessInput() {
     somethingMoved = false;
     if (rightInput()) {
         MoveRight();
-    }
-    if (leftInput()) {
+    } else if (leftInput()) {
         MoveLeft();
-    }
-    if (upInput()) {
+    } else if (upInput()) {
         MoveUp();
-    }
-    if (downInput()) {
+    } else if (downInput()) {
         MoveDown();
-    }
-    if (IsKeyPressed(KEY_F12)) {
+    } else if (IsKeyPressed(KEY_F12)) {
         setScreenSizes();
     }
     if (somethingMoved) {
@@ -361,11 +417,11 @@ void ProcessInput() {
 }
 
 void SpawnRandomTile() {
-    int emptyCount = getEmptyTiles();
+    // printf("Empty: %i\n", emptyCount);
     if (emptyCount == 0) {
         return;
     }
-    int cellIndex = GetRandomValue(0, emptyCount);
+    int cellIndex = GetRandomValue(0, emptyCount - 1);
 
     int cellValue = 2;
     if (GetRandomValue(1, 10) == 10) {
@@ -411,6 +467,12 @@ void drawAllTiles() {
     }
 }
 
+void processGameOver() {
+    if (emptyCount == 0) {
+        Game_Over = true;
+    }
+}
+
 int main() {
     // randomSeed = time(NULL);  // not need for some reason???
     // printf("seed: %i\n", randomSeed);
@@ -430,13 +492,25 @@ int main() {
     while (!WindowShouldClose()) {
         float delta = GetFrameTime();
 
+        getEmptyTiles();
         ProcessInput();
+        processGameOver();
         BeginDrawing();
 
         ClearBackground(DARKGRAY);
 
-        DrawText(TextFormat("FPS: %i", (int)(1.0f / delta)), 10, 10, 20, BLACK);
+        DrawText(TextFormat("FPS: %i", (int)(1.0f / delta)), 10, 10, 20, WHITE);
         DrawGameGrid();
+
+        if (Game_Over) {
+
+            char *gameOverText = "You Lose!";
+            int fontSize = Gamebox_Height / 5;
+            int textWidth = MeasureText(gameOverText, fontSize);
+            int posX = (Screen_Width - textWidth) / 2;
+            int posY = (Screen_Height - fontSize) / 2;
+            DrawText(gameOverText, posX, posY, fontSize, WHITE);
+        }
 
         EndDrawing();
     }
