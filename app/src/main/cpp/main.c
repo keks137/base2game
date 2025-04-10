@@ -2,7 +2,7 @@
 #include "funny_math.h"
 #include <inttypes.h>
 #include <memory.h>
-#include "raymob.h"
+#include <raylib.h>
 #include <stdbool.h>
 #include <stdio.h>
 // #include <time.h>
@@ -153,8 +153,8 @@ static inline float absValue(float x) { return x < 0 ? -x : x; }
 // }
 
 void initTiles() {
-    for (int x; x < GRID_COLS; x++) {
-        for (int y; y < GRID_ROWS; y++) {
+    for (int x = 0; x < GRID_COLS; x++) {
+        for (int y = 0; y < GRID_ROWS; y++) {
             gameGrid[x][y] = initTile;
         }
     }
@@ -644,9 +644,12 @@ unsigned long int getScore() {
 void drawScore() {
     int gameScore = getScore();
     char scoreText[30];
+
     sprintf(scoreText, "SCORE: %d", gameScore);
-    int fontSize = Gamebox_Y - Gamebox_Y / 4;
-    int textWidth = MeasureText(scoreText, fontSize);
+
+    //int fontSize = Gamebox_Y - (Gamebox_Y / 2);
+    int fontSize = 40;
+    int textWidth = MeasureText(scoreText, fontSize) ;
     int posX = (Screen_Width - textWidth) / 2;
     int posY = (Gamebox_Y - fontSize) / 2;
     DrawText(scoreText, posX, posY, fontSize, WHITE);
@@ -693,10 +696,12 @@ void setScreenSizes() {
     Gamebox_X = Screen_Width / 2 - Gamebox_Width / 2;
     Gamebox_Y = Screen_Height / 2 - Gamebox_Height / 2;
 
-    touchArea.x = 220;
-    touchArea.y = 10;
-    touchArea.width = Screen_Width - 230.0f;
-    touchArea.height = Screen_Height - 20.0f;
+    // touchArea.x = 220;
+    // touchArea.y = 10;
+    // touchArea.width = Screen_Width - 230.0f;
+    // touchArea.height = Screen_Height - 20.0f;
+    touchArea =
+        (Rectangle){Gamebox_X, Gamebox_Y, Gamebox_Width, Gamebox_Height};
 }
 
 void drawAllTiles() {
