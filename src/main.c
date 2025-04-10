@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "funny_math.h"
+#include <inttypes.h>
 #include <memory.h>
 #include <raylib.h>
 #include <stdbool.h>
@@ -97,9 +98,17 @@ typedef struct Movement {
     bool moving;
 } Movement;
 
+typedef enum Animations {
+    SPAWNING,
+} Animation;
+
+typedef struct Anim {
+    Animation current;
+} Anim;
+
 typedef struct Tile {
     int val;
-    Movement mov;
+    Anim anim;
     bool merged;
 } Tile;
 
@@ -187,16 +196,18 @@ void getMoveList(int dir) {
     }
 }
 
+/*
 void initPos() {
     for (int y = 0; y < GRID_ROWS; y++) {
         for (int x = 0; x < GRID_COLS; x++) {
             gameGrid[x][y].mov.pos =
-                (Fpos){Gamebox_X + x * Cell_Width,
-                       Gamebox_Y + y * Cell_Height};
+                (Fpos){Gamebox_X + x * Cell_Width, Gamebox_Y + y * Cell_Height};
         }
     }
 }
+*/
 
+/*
 void PrepareMoveAnimation() {
     for (int y = 0; y < GRID_ROWS; y++) {
         for (int x = 0; x < GRID_COLS; x++) {
@@ -206,7 +217,9 @@ void PrepareMoveAnimation() {
         }
     }
 }
+*/
 
+/*
 void UpdateTargetPositions() {
     for (int y = 0; y < GRID_ROWS; y++) {
         for (int x = 0; x < GRID_COLS; x++) {
@@ -219,63 +232,64 @@ void UpdateTargetPositions() {
         }
     }
 }
+*/
 
 void UpdateAnimations(float delta) {
     puts("=============================================");
-    for (int y = 0; y < GRID_ROWS; y++) {
-        for (int x = 0; x < GRID_COLS; x++) {
-            /*
-              if (gameGrid[x][y].val != 0) {
-                printf("moving[%i][%i]: %i\n", x, y, gameGrid[x][y].mov.moving);
-                printf("target[%i][%i]: %f %f\n", x, y,
-                       gameGrid[x][y].mov.targpos.x,
-                       gameGrid[x][y].mov.targpos.y);
-                printf("start[%i][%i]: %f %f\n", x, y,
-                       gameGrid[x][y].mov.start.x, gameGrid[x][y].mov.start.y);
-                printf("pos[%i][%i]: %f %f\n", x, y, gameGrid[x][y].mov.pos.x,
-                       gameGrid[x][y].mov.pos.y);
-            }
-            */
+    /*
+for (int y = 0; y < GRID_ROWS; y++) {
+for (int x = 0; x < GRID_COLS; x++) {
+      if (gameGrid[x][y].val != 0) {
+        printf("moving[%i][%i]: %i\n", x, y, gameGrid[x][y].mov.moving);
+        printf("target[%i][%i]: %f %f\n", x, y,
+               gameGrid[x][y].mov.targpos.x,
+               gameGrid[x][y].mov.targpos.y);
+        printf("start[%i][%i]: %f %f\n", x, y,
+               gameGrid[x][y].mov.start.x, gameGrid[x][y].mov.start.y);
+        printf("pos[%i][%i]: %f %f\n", x, y, gameGrid[x][y].mov.pos.x,
+               gameGrid[x][y].mov.pos.y);
+    }
 
-            if (gameGrid[x][y].mov.moving) {
-                gameGrid[x][y].mov.prog += delta * moveSpeed;
+    if (gameGrid[x][y].mov.moving) {
+        gameGrid[x][y].mov.prog += delta * moveSpeed;
 
-                if (gameGrid[x][y].mov.prog > 1.0f) {
-                    gameGrid[x][y].mov.prog = 1.0f;
-                    gameGrid[x][y].mov.pos = gameGrid[x][y].mov.targpos;
-                    gameGrid[x][y].mov.moving = false;
-                } else {
-                    gameGrid[x][y].mov.pos.x = gameGrid[x][y].mov.start.x +
-                                               (gameGrid[x][y].mov.targpos.x -
-                                                gameGrid[x][y].mov.start.x) *
-                                                   gameGrid[x][y].mov.prog;
-                    gameGrid[x][y].mov.pos.y = gameGrid[x][y].mov.start.y +
-                                               (gameGrid[x][y].mov.targpos.y -
-                                                gameGrid[x][y].mov.start.y) *
-                                                   gameGrid[x][y].mov.prog;
-                }
+        if (gameGrid[x][y].mov.prog > 1.0f) {
+            gameGrid[x][y].mov.prog = 1.0f;
+            gameGrid[x][y].mov.pos = gameGrid[x][y].mov.targpos;
+            gameGrid[x][y].mov.moving = false;
+        } else {
+            gameGrid[x][y].mov.pos.x = gameGrid[x][y].mov.start.x +
+                                       (gameGrid[x][y].mov.targpos.x -
+                                        gameGrid[x][y].mov.start.x) *
+                                           gameGrid[x][y].mov.prog;
+            gameGrid[x][y].mov.pos.y = gameGrid[x][y].mov.start.y +
+                                       (gameGrid[x][y].mov.targpos.y -
+                                        gameGrid[x][y].mov.start.y) *
+                                           gameGrid[x][y].mov.prog;
+        }
 
-                if (absValue(gameGrid[x][y].mov.pos.x -
-                             gameGrid[x][y].mov.targpos.x) < 5.0f) {
-                    gameGrid[x][y].mov.prog = 1.0f;
-                    gameGrid[x][y].mov.moving = false;
-                    gameGrid[x][y].mov.pos = gameGrid[x][y].mov.targpos;
-                }
-            }
-            if (gameGrid[x][y].val != 0) {
-                printf("moving[%i][%i]: %i\n", x, y, gameGrid[x][y].mov.moving);
-                printf("targ[%i][%i]: %i %i\n", x, y, gameGrid[x][y].mov.targ.x,
-                       gameGrid[x][y].mov.targ.y);
-                printf("targpos[%i][%i]: %f %f\n", x, y,
-                       gameGrid[x][y].mov.targpos.x,
-                       gameGrid[x][y].mov.targpos.y);
-                printf("start[%i][%i]: %f %f\n", x, y,
-                       gameGrid[x][y].mov.start.x, gameGrid[x][y].mov.start.y);
-                printf("pos[%i][%i]: %f %f\n", x, y, gameGrid[x][y].mov.pos.x,
-                       gameGrid[x][y].mov.pos.y);
-            }
+        if (absValue(gameGrid[x][y].mov.pos.x -
+                     gameGrid[x][y].mov.targpos.x) < 5.0f) {
+            gameGrid[x][y].mov.prog = 1.0f;
+            gameGrid[x][y].mov.moving = false;
+            gameGrid[x][y].mov.pos = gameGrid[x][y].mov.targpos;
         }
     }
+    if (gameGrid[x][y].val != 0) {
+        printf("moving[%i][%i]: %i\n", x, y, gameGrid[x][y].mov.moving);
+        printf("targ[%i][%i]: %i %i\n", x, y, gameGrid[x][y].mov.targ.x,
+               gameGrid[x][y].mov.targ.y);
+        printf("targpos[%i][%i]: %f %f\n", x, y,
+               gameGrid[x][y].mov.targpos.x,
+               gameGrid[x][y].mov.targpos.y);
+        printf("start[%i][%i]: %f %f\n", x, y,
+               gameGrid[x][y].mov.start.x, gameGrid[x][y].mov.start.y);
+        printf("pos[%i][%i]: %f %f\n", x, y, gameGrid[x][y].mov.pos.x,
+               gameGrid[x][y].mov.pos.y);
+    }
+}
+}
+*/
 }
 
 void DrawGameGrid(float delta) {
@@ -287,7 +301,8 @@ void DrawGameGrid(float delta) {
                               Gamebox_Y + y * Cell_Height, Cell_Width,
                               Cell_Height, map_color(val));
             } else {
-                Fpos tilePos = gameGrid[x][y].mov.pos;
+                Fpos tilePos = (Fpos){.x = Gamebox_X + x * Cell_Width,
+                                      .y = Gamebox_Y + y * Cell_Height};
                 // printf("X1: %f\n", tilePos.x);
                 // printf("Y1: %f\n", tilePos.y);
 
@@ -692,12 +707,14 @@ void SpawnRandomTile() {
     unsigned int posX = emptyTiles[cellIndex].x;
     unsigned int posY = emptyTiles[cellIndex].y;
     gameGrid[posX][posY].val = cellValue;
+    /*
     gameGrid[posX][posY].mov.pos.x = Gamebox_X + posX * Cell_Width;
     gameGrid[posX][posY].mov.pos.y = Gamebox_Y + posY * Cell_Height;
     gameGrid[posX][posY].mov.targpos.x = Gamebox_X + posX * Cell_Width;
     gameGrid[posX][posY].mov.targpos.y = Gamebox_Y + posY * Cell_Height;
     gameGrid[posX][posY].mov.targ.x = posX;
     gameGrid[posX][posY].mov.targ.y = posY;
+    */
     // printf("X3: %f\n", gameGrid[posX][posY].mov.pos.y);
     // printf("Y3: %f\n", gameGrid[posX][posY].mov.pos.y);
 }
@@ -757,7 +774,7 @@ int main() {
 
     // drawAllTiles();
 
-    initPos();
+    //initPos();
 
     SpawnRandomTile();
     SpawnRandomTile();
