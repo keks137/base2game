@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "funny_math.h"
+#include "save.h"
 #include <inttypes.h>
 #include <memory.h>
 #include <raylib.h>
@@ -514,6 +515,7 @@ void autoMovement() {
         MoveDown();
         autoMove = 1;
     }
+    SpawnRandomTile();
 }
 
 bool moveableUp() {
@@ -631,8 +633,8 @@ void processInput() {
     }
 }
 
-unsigned long int getScore() {
-    unsigned long int score = 0;
+unsigned int getScore() {
+    unsigned int score = 0;
     for (int x = 0; x < GRID_COLS; x++) {
         for (int y = 0; y < GRID_ROWS; y++) {
             score += gameGrid[x][y].val;
@@ -647,9 +649,9 @@ void drawScore() {
 
     sprintf(scoreText, "SCORE: %d", gameScore);
 
-    //int fontSize = Gamebox_Y - (Gamebox_Y / 2);
+    // int fontSize = Gamebox_Y - (Gamebox_Y / 2);
     int fontSize = 40;
-    int textWidth = MeasureText(scoreText, fontSize) ;
+    int textWidth = MeasureText(scoreText, fontSize);
     int posX = (Screen_Width - textWidth) / 2;
     int posY = (Gamebox_Y - fontSize) / 2;
     DrawText(scoreText, posX, posY, fontSize, WHITE);
@@ -657,7 +659,7 @@ void drawScore() {
 
 void SpawnRandomTile() {
     getEmptyTiles();
-    printf("Empty: %i\n", emptyCount);
+    // printf("Empty: %i\n", emptyCount);
     if (emptyCount == 0) {
         return;
     }
@@ -712,9 +714,53 @@ void drawAllTiles() {
     }
 }
 
+void resetGame() {
+    Game_Over = false;
+    initTiles();
+    SpawnRandomTile();
+    SpawnRandomTile();
+}
+
+void handleGameOver(bool update) {
+    static int finalScore = 0;
+    static int highScore = 0;
+
+    if (update) {
+        finalScore = getScore();
+        highScore = LoadHighScore();
+
+    } else {
+        char *gameOverText = "You Lose!";
+        int fontSize = Gamebox_Height / 5;
+        int textWidth = MeasureText(gameOverText, fontSize);
+        int posX = (Screen_Width - textWidth) / 2;
+        int posY = (Screen_Height - fontSize) / 2;
+        DrawText(gameOverText, posX, posY, fontSize, BLACK);
+
+        char highScoreText[256];
+        snprintf(highScoreText + strlen(highScoreText),
+                 sizeof(highScoreText) - strlen(highScoreText), "Hi: %i",
+                 highScore);
+        int hi_fontSize = Gamebox_Height / 10;
+        int hi_textWidth = MeasureText(highScoreText, hi_fontSize);
+        int hi_posX = (Screen_Width - hi_textWidth) / 2;
+        int hi_posY = (Screen_Height - hi_fontSize) / 1.5;
+        DrawText(highScoreText, hi_posX, hi_posY, hi_fontSize, BLACK);
+
+        if (finalScore > highScore) {
+            SaveHighScore(finalScore);
+        }
+
+        if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP)) {
+            resetGame();
+        }
+    }
+}
+
 void processGameOver() {
     if (!isMoveable.any) {
         Game_Over = true;
+        handleGameOver(true);
     }
 }
 
@@ -732,6 +778,7 @@ int main() {
     // drawAllTiles();
 
     initTiles();
+    InitStorage();
 
     SpawnRandomTile();
     SpawnRandomTile();
@@ -741,7 +788,11 @@ int main() {
         // printf("delta: %f\n", delta);
 
         processMoveable();
+
         processInput();
+
+        // autoMovement();
+
         processGameOver();
 
         UpdateAnimations(delta);
@@ -758,12 +809,7 @@ int main() {
         drawScore();
 
         if (Game_Over) {
-            char *gameOverText = "You Lose!";
-            int fontSize = Gamebox_Height / 5;
-            int textWidth = MeasureText(gameOverText, fontSize);
-            int posX = (Screen_Width - textWidth) / 2;
-            int posY = (Screen_Height - fontSize) / 2;
-            DrawText(gameOverText, posX, posY, fontSize, WHITE);
+            handleGameOver(false);
         }
 
         EndDrawing();

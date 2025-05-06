@@ -34,7 +34,16 @@ static def getGLVersionCode(String version) {
     return versionCodes[version]
 }
 
+apply from: "secrets.gradle"
 android {
+     signingConfigs {
+    release {
+      storeFile file(keystoreFile)
+      storePassword keystorePassword
+      keyAlias keyAlias
+      keyPassword keyPassword
+    }
+  }
     namespace project.properties['app.application_id']
     compileSdk 34
 
@@ -132,6 +141,8 @@ android {
             jniDebuggable true
         }
         release {
+        //                signingConfig signingConfigs.release
+
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
