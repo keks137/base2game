@@ -1,6 +1,7 @@
 #ifndef INCLUDE_SRC_SAVE_H_
 #define INCLUDE_SRC_SAVE_H_
 
+extern char storageDataFile[256];
 #include "stdbool.h"
 
 typedef enum {

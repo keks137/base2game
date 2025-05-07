@@ -234,7 +234,7 @@ unsigned char *LoadFileData(const char *fileName, int *dataSize)
 
             fclose(file);
         }
-        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file7", fileName);
 #else
     TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
 #endif
@@ -277,7 +277,7 @@ bool SaveFileData(const char *fileName, void *data, int dataSize)
             int result = fclose(file);
             if (result == 0) success = true;
         }
-        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file", fileName);
+        else TRACELOG(LOG_WARNING, "FILEIO: [%s] Failed to open file8", fileName);
 #else
     TRACELOG(LOG_WARNING, "FILEIO: Standard file io not supported, use custom file callback");
 #endif

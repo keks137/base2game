@@ -1,9 +1,10 @@
 #include "constants.h"
+#include "deps/raymob/raymob.h"
 #include "funny_math.h"
+#include "raylib.h"
 #include "save.h"
 #include <inttypes.h>
 #include <memory.h>
-#include <raylib.h>
 #include <stdbool.h>
 #include <stdio.h>
 // #include <time.h>
@@ -631,6 +632,9 @@ void processInput() {
     if (somethingMoved) {
         SpawnRandomTile();
     }
+    if (IsKeyDown(KEY_VOLUME_DOWN) || IsKeyDown(KEY_P)){
+        autoMovement();
+    }
 }
 
 unsigned int getScore() {
@@ -735,7 +739,7 @@ void handleGameOver(bool update) {
         int textWidth = MeasureText(gameOverText, fontSize);
         int posX = (Screen_Width - textWidth) / 2;
         int posY = (Screen_Height - fontSize) / 2;
-        DrawText(gameOverText, posX, posY, fontSize, BLACK);
+        DrawText(gameOverText, posX, posY, fontSize, WHITE);
 
         char highScoreText[256];
         snprintf(highScoreText + strlen(highScoreText),
@@ -745,20 +749,20 @@ void handleGameOver(bool update) {
         int hi_textWidth = MeasureText(highScoreText, hi_fontSize);
         int hi_posX = (Screen_Width - hi_textWidth) / 2;
         int hi_posY = (Screen_Height - hi_fontSize) / 1.5;
-        DrawText(highScoreText, hi_posX, hi_posY, hi_fontSize, BLACK);
+        DrawText(highScoreText, hi_posX, hi_posY, hi_fontSize, WHITE);
 
         if (finalScore > highScore) {
             SaveHighScore(finalScore);
         }
 
-        if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_TAP)) {
+        if (IsKeyPressed(KEY_ENTER) || IsGestureDetected(GESTURE_DOUBLETAP)) {
             resetGame();
         }
     }
 }
 
 void processGameOver() {
-    if (!isMoveable.any) {
+    if (!isMoveable.any && Game_Over == false) {
         Game_Over = true;
         handleGameOver(true);
     }
@@ -791,7 +795,7 @@ int main() {
 
         processInput();
 
-        // autoMovement();
+        //autoMovement();
 
         processGameOver();
 

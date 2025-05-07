@@ -314,7 +314,7 @@ void* ReadFromAppStorage(const char *filepath, int *dataSize){
     FILE *file = fopen(path, "rb");
 
     if (file == NULL){
-        TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to open file", path);
+        TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to open file2", path);
         return NULL;
     }
 
@@ -387,7 +387,7 @@ bool WriteToAppStorage(const char *filepath, void *data, unsigned int dataSize){
         int result = fclose(file);
         if (result == 0) success = true;
     }
-    else TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to open file", path);
+    else TraceLog(LOG_WARNING, "FILEIO: [%s] Failed to open file3", path);
 
     free((void*)appStoragePath);
     free((void*)path);
