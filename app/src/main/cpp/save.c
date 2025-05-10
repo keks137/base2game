@@ -15,7 +15,7 @@
 // ...
 
 static pthread_mutex_t storageMutex = PTHREAD_MUTEX_INITIALIZER;
-static char *storageFileName = "storage.data";
+static char *_storageFileName = "storage.data";
 char storageDataFile[256];
 static bool storageInitialized = false;
 int badGlobalHighscoreVarPlsRemoveLater = 0;
@@ -36,7 +36,7 @@ bool InitStorage() {
 
         // Build full path
         snprintf(storageDataFile, sizeof(storageDataFile), "%s/%s", basePath,
-                 storageFileName);
+                 _storageFileName);
 
         // Create empty file atomically
         FILE *file =
@@ -123,10 +123,52 @@ bool SaveStorageValue(unsigned int position, int value) {
     return success;
 }
 
+bool BadSaveVal(int value) {
+
+    FILE *file_ptr = fopen(storageDataFile, "wb");
+
+    if (file_ptr == NULL) {
+        perror("Error opening file for writing");
+        return false;
+    }
+
+    size_t elements_written = fwrite(&value, sizeof(int), 1, file_ptr);
+
+    if (elements_written != 1) {
+        perror("Error writing integer in binary");
+        fclose(file_ptr);
+        return false;
+    }
+
+    fclose(file_ptr);
+
+    return true;
+}
+
+int BadReadVal() {
+    const uint vals_to_read = 1;
+    int val = -1;
+    FILE *file_ptr = fopen(storageDataFile, "rb");
+    if (file_ptr == NULL) {
+        perror("Error opening file for reading in binary");
+
+        LOGD("Error opening file for reading in binary: %s", storageDataFile);
+        return -1;
+    }
+    size_t elements_read = fread(&val, sizeof(int), vals_to_read, file_ptr);
+
+    if (elements_read != vals_to_read) {
+        perror("Error reading integer in binary");
+    }
+    fclose(file_ptr);
+    LOGD("Val: %i\n", val);
+    return val;
+}
+
 bool SaveHighScore(int value) {
     // TODO: actual file handling
 
-    badGlobalHighscoreVarPlsRemoveLater = value;
+    BadSaveVal(value);
     return true;
 
     // return SaveStorageValue(STORAGE_POSITION_HISCORE, value);
@@ -140,7 +182,7 @@ int LoadStorageValue(unsigned int position) {
     int value = -1;
     int dataSize = 0;
 
-    if (!IsFileExistsInAppStorage(storageFileName)) {
+    if (!IsFileExistsInAppStorage(_storageFileName)) {
         LOGD("First run: No storage file yet");
         SaveHighScore(0);
         pthread_mutex_unlock(&storageMutex);
@@ -170,6 +212,6 @@ int LoadStorageValue(unsigned int position) {
 int LoadHighScore() {
     // TODO: actual file handling
 
-    return badGlobalHighscoreVarPlsRemoveLater;
+    return BadReadVal();
     // return LoadStorageValue(STORAGE_POSITION_HISCORE);
 }
