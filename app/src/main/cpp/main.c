@@ -1,5 +1,8 @@
+#include "tile.h"
+#include "state.h"
 #include "constants.h"
 #include "deps/raymob/raymob.h"
+#include <android/log.h>
 #include "funny_math.h"
 #include <android_native_app_glue.h>
 #include "raylib.h"
@@ -8,7 +11,9 @@
 #include <inttypes.h>
 #include <memory.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 // #include <time.h>
 
 enum {
@@ -26,6 +31,11 @@ enum {
     c_yellow = 2048,
 } Colors;
 
+Tile initTile = {
+    .val = 0,
+    .scale = 1.0,
+    .anim = ANIMNONE,
+};
 #define MAX_GESTURE_STRINGS 20
 
 unsigned int Screen_Width = 100;
@@ -102,27 +112,7 @@ typedef struct Movement {
     bool moving;
 } Movement;
 
-typedef enum Animations {
-    ANIMNONE,
-    ANIMSPAWNING,
-} Animation;
 
-typedef struct Anim {
-    Animation current;
-    float prog;
-} Anim;
-
-typedef struct Tile {
-    int val;
-    Anim anim;
-    float scale;
-} Tile;
-
-Tile initTile = {
-    .val = 0,
-    .scale = 1.0,
-    .anim = ANIMNONE,
-};
 
 typedef struct Moveable {
     bool left;
@@ -132,7 +122,8 @@ typedef struct Moveable {
     bool any;
 } Moveable;
 
-Tile gameGrid[GRID_COLS][GRID_ROWS] = { 0 };
+//Tile gameGrid[GRID_COLS][GRID_ROWS] = { 0 };
+
 static Pos emptyTiles[GRID_ROWS * GRID_COLS] = { 0 };
 unsigned int emptyCount = GRID_ROWS * GRID_COLS;
 
@@ -165,7 +156,7 @@ void initTiles()
 {
     for (int x = 0; x < GRID_COLS; x++) {
 	for (int y = 0; y < GRID_ROWS; y++) {
-	    gameGrid[x][y] = initTile;
+	    g_gameState.gameGrid[x][y] = initTile;
 	}
     }
 }
@@ -173,7 +164,7 @@ void initTiles()
 void resetEmptyTiles()
 {
     for (int i; i < emptyCount; i++) {
-	gameGrid[emptyTiles[i].x][emptyTiles[i].y] = initTile;
+	g_gameState.gameGrid[emptyTiles[i].x][emptyTiles[i].y] = initTile;
     }
 }
 
@@ -186,7 +177,7 @@ void getEmptyTiles()
 
     for (int y = 0; y < GRID_ROWS; y++) {
 	for (int x = 0; x < GRID_COLS; x++) {
-	    if (gameGrid[x][y].val == 0) {
+	    if (g_gameState.gameGrid[x][y].val == 0) {
 		emptyTiles[emptyCount].x = x;
 		emptyTiles[emptyCount].y = y;
 		emptyCount++;
@@ -200,15 +191,16 @@ void getMovesLeft()
 {
     for (int y = 0; y < GRID_ROWS; y++) {
 	for (int x = 0; x < GRID_COLS; x++) {
-	    if (gameGrid[x][y].val != 0) {
-		int val = gameGrid[x][y].val;
-		if (gameGrid[x - 1][y].val == val && x - 1 >= 0) {
+	    if (g_gameState.gameGrid[x][y].val != 0) {
+		int val = g_gameState.gameGrid[x][y].val;
+		if (g_gameState.gameGrid[x - 1][y].val == val && x - 1 >= 0) {
 		    val *= 2;
-		    gameGrid[x][y].val = 0;
-		    gameGrid[x - 1][y].val = val;
-		} else if (gameGrid[x - 1][y].val == 0 && x - 1 >= 0) {
-		    gameGrid[x][y].val = 0;
-		    gameGrid[x - 1][y].val = val;
+		    g_gameState.gameGrid[x][y].val = 0;
+		    g_gameState.gameGrid[x - 1][y].val = val;
+		} else if (g_gameState.gameGrid[x - 1][y].val == 0 &&
+			   x - 1 >= 0) {
+		    g_gameState.gameGrid[x][y].val = 0;
+		    g_gameState.gameGrid[x - 1][y].val = val;
 		    y--;
 		}
 	    }
@@ -237,21 +229,21 @@ void UpdateAnimations(float delta)
     // puts("=============================================");
     for (int y = 0; y < GRID_ROWS; y++) {
 	for (int x = 0; x < GRID_COLS; x++) {
-	    if (gameGrid[x][y].anim.current == ANIMSPAWNING) {
-		gameGrid[x][y].anim.prog += moveSpeed * 5 * delta;
+	    if (g_gameState.gameGrid[x][y].anim.current == ANIMSPAWNING) {
+		g_gameState.gameGrid[x][y].anim.prog += moveSpeed * 5 * delta;
 
 		// bezier
-		float t = gameGrid[x][y].anim.prog;
-		gameGrid[x][y].scale = 3 * t * t - 2 * t * t * t;
+		float t = g_gameState.gameGrid[x][y].anim.prog;
+		g_gameState.gameGrid[x][y].scale = 3 * t * t - 2 * t * t * t;
 
-		if (gameGrid[x][y].anim.prog >= 1.0) {
-		    gameGrid[x][y].scale = 1.0;
-		    gameGrid[x][y].anim.current = ANIMNONE;
-		    gameGrid[x][y].anim.prog = 0.0;
+		if (g_gameState.gameGrid[x][y].anim.prog >= 1.0) {
+		    g_gameState.gameGrid[x][y].scale = 1.0;
+		    g_gameState.gameGrid[x][y].anim.current = ANIMNONE;
+		    g_gameState.gameGrid[x][y].anim.prog = 0.0;
 		}
 	    }
 	    // puts("=============================================");
-	    // printf("x: %i y:%i scale: %f", x, y, gameGrid[x][y].scale);
+	    // printf("x: %i y:%i scale: %f", x, y, g_gameState.gameGrid[x][y].scale);
 	}
     }
 }
@@ -260,7 +252,7 @@ void DrawGameGrid(float delta)
 {
     for (int y = 0; y < GRID_ROWS; y++) {
 	for (int x = 0; x < GRID_COLS; x++) {
-	    Tile currentTile = gameGrid[x][y];
+	    Tile currentTile = g_gameState.gameGrid[x][y];
 	    int val = currentTile.val;
 	    if (val == 0) {
 		// DrawRectangle(Gamebox_X + x * Cell_Width,
@@ -312,7 +304,7 @@ void DrawGameGrid(float delta)
 			     Gamebox_Y + y * Cell_Height + posY, fontSize,
 			     WHITE);
 		}
-		// gameGrid[x][y].mov.pos = tilePos;
+		// g_gameState.gameGrid[x][y].mov.pos = tilePos;
 	    }
 	}
     }
@@ -324,28 +316,28 @@ void MoveRight()
 	int writePos = GRID_COLS - 1;
 	int prevVal = -1;
 	for (int x = GRID_COLS - 1; x >= 0; x--) {
-	    if (gameGrid[x][y].val != 0) {
+	    if (g_gameState.gameGrid[x][y].val != 0) {
 		if (prevVal == -1) {
-		    prevVal = gameGrid[x][y].val;
-		} else if (prevVal == gameGrid[x][y].val) {
-		    gameGrid[writePos][y].val = prevVal * 2;
+		    prevVal = g_gameState.gameGrid[x][y].val;
+		} else if (prevVal == g_gameState.gameGrid[x][y].val) {
+		    g_gameState.gameGrid[writePos][y].val = prevVal * 2;
 		    PlaySfxPb(SFX_MERGE, 0.1);
 		    prevVal = -1;
 		    writePos--;
 		} else {
-		    gameGrid[writePos][y].val = prevVal;
-		    prevVal = gameGrid[x][y].val;
+		    g_gameState.gameGrid[writePos][y].val = prevVal;
+		    prevVal = g_gameState.gameGrid[x][y].val;
 		    writePos--;
 		}
 	    }
 	}
 	if (prevVal != -1) {
-	    gameGrid[writePos][y].val = prevVal;
+	    g_gameState.gameGrid[writePos][y].val = prevVal;
 	    writePos--;
 	}
 	// Fill remaining cells with 0
 	while (writePos >= 0) {
-	    gameGrid[writePos][y].val = 0;
+	    g_gameState.gameGrid[writePos][y].val = 0;
 	    writePos--;
 	}
     }
@@ -357,31 +349,31 @@ void MoveLeft()
 	int writePos = 0;
 	int prevVal = -1;
 	for (int x = 0; x < GRID_COLS; x++) {
-	    if (gameGrid[x][y].val != 0) {
+	    if (g_gameState.gameGrid[x][y].val != 0) {
 		if (prevVal == -1) {
-		    prevVal = gameGrid[x][y].val;
-		} else if (prevVal == gameGrid[x][y].val) {
-		    gameGrid[writePos][y].val = prevVal * 2;
+		    prevVal = g_gameState.gameGrid[x][y].val;
+		} else if (prevVal == g_gameState.gameGrid[x][y].val) {
+		    g_gameState.gameGrid[writePos][y].val = prevVal * 2;
 		    PlaySfxPb(SFX_MERGE, 0.1);
-		    // gameGrid[x][y].mov.targ = (Pos){writePos, y};
-		    // gameGrid[x][y].mov.moving = true;
-		    // gameGrid[x][y].mov.prog = 0.0;
+		    // g_gameState.gameGrid[x][y].mov.targ = (Pos){writePos, y};
+		    // g_gameState.gameGrid[x][y].mov.moving = true;
+		    // g_gameState.gameGrid[x][y].mov.prog = 0.0;
 		    prevVal = -1;
 		    writePos++;
 		} else {
-		    gameGrid[writePos][y].val = prevVal;
-		    prevVal = gameGrid[x][y].val;
+		    g_gameState.gameGrid[writePos][y].val = prevVal;
+		    prevVal = g_gameState.gameGrid[x][y].val;
 		    writePos++;
 		}
 	    }
 	}
 	if (prevVal != -1) {
-	    gameGrid[writePos][y].val = prevVal;
+	    g_gameState.gameGrid[writePos][y].val = prevVal;
 	    writePos++;
 	}
 	// Fill remaining cells with 0
 	while (writePos < GRID_COLS) {
-	    gameGrid[writePos][y].val = 0;
+	    g_gameState.gameGrid[writePos][y].val = 0;
 	    writePos++;
 	}
     }
@@ -393,28 +385,28 @@ void MoveUp()
 	int writePos = 0;
 	int prevVal = -1;
 	for (int y = 0; y < GRID_ROWS; y++) {
-	    if (gameGrid[x][y].val != 0) {
+	    if (g_gameState.gameGrid[x][y].val != 0) {
 		if (prevVal == -1) {
-		    prevVal = gameGrid[x][y].val;
-		} else if (prevVal == gameGrid[x][y].val) {
-		    gameGrid[x][writePos].val = prevVal * 2;
+		    prevVal = g_gameState.gameGrid[x][y].val;
+		} else if (prevVal == g_gameState.gameGrid[x][y].val) {
+		    g_gameState.gameGrid[x][writePos].val = prevVal * 2;
 		    PlaySfxPb(SFX_MERGE, 0.1);
 		    prevVal = -1;
 		    writePos++;
 		} else {
-		    gameGrid[x][writePos].val = prevVal;
-		    prevVal = gameGrid[x][y].val;
+		    g_gameState.gameGrid[x][writePos].val = prevVal;
+		    prevVal = g_gameState.gameGrid[x][y].val;
 		    writePos++;
 		}
 	    }
 	}
 	if (prevVal != -1) {
-	    gameGrid[x][writePos].val = prevVal;
+	    g_gameState.gameGrid[x][writePos].val = prevVal;
 	    writePos++;
 	}
 	// Fill remaining cells with 0
 	while (writePos < GRID_ROWS) {
-	    gameGrid[x][writePos].val = 0;
+	    g_gameState.gameGrid[x][writePos].val = 0;
 	    writePos++;
 	}
     }
@@ -426,28 +418,28 @@ void MoveDown()
 	int writePos = GRID_ROWS - 1;
 	int prevVal = -1;
 	for (int y = GRID_ROWS - 1; y >= 0; y--) {
-	    if (gameGrid[x][y].val != 0) {
+	    if (g_gameState.gameGrid[x][y].val != 0) {
 		if (prevVal == -1) {
-		    prevVal = gameGrid[x][y].val;
-		} else if (prevVal == gameGrid[x][y].val) {
-		    gameGrid[x][writePos].val = prevVal * 2;
+		    prevVal = g_gameState.gameGrid[x][y].val;
+		} else if (prevVal == g_gameState.gameGrid[x][y].val) {
+		    g_gameState.gameGrid[x][writePos].val = prevVal * 2;
 		    PlaySfxPb(SFX_MERGE, 0.1);
 		    prevVal = -1;
 		    writePos--;
 		} else {
-		    gameGrid[x][writePos].val = prevVal;
-		    prevVal = gameGrid[x][y].val;
+		    g_gameState.gameGrid[x][writePos].val = prevVal;
+		    prevVal = g_gameState.gameGrid[x][y].val;
 		    writePos--;
 		}
 	    }
 	}
 	if (prevVal != -1) {
-	    gameGrid[x][writePos].val = prevVal;
+	    g_gameState.gameGrid[x][writePos].val = prevVal;
 	    writePos--;
 	}
 	// Fill remaining cells with 0
 	while (writePos >= 0) {
-	    gameGrid[x][writePos].val = 0;
+	    g_gameState.gameGrid[x][writePos].val = 0;
 	    writePos--;
 	}
     }
@@ -534,16 +526,16 @@ bool downInput()
 
 void autoMovement()
 {
-    static int autoMove = 0;
     bool moved = false;
     // printf("Automove: %i\n", autoMove);
-    if (autoMove == 1 && isMoveable.left) {
+    if (isMoveable.left) {
 	MoveLeft();
-	autoMove = 0;
 	moved = true;
-    } else if (autoMove == 0 && isMoveable.down) {
+    } else if (isMoveable.down) {
 	MoveDown();
-	autoMove = 1;
+	moved = true;
+    } else if (isMoveable.right) {
+	MoveRight();
 	moved = true;
     }
     if (moved) {
@@ -554,9 +546,9 @@ void autoMovement()
 bool moveableUp()
 {
     for (int x = 0; x < GRID_COLS; x++) {
-	int prevVal = gameGrid[x][0].val;
+	int prevVal = g_gameState.gameGrid[x][0].val;
 	for (int y = 1; y < GRID_ROWS; y++) {
-	    int cellVal = gameGrid[x][y].val;
+	    int cellVal = g_gameState.gameGrid[x][y].val;
 	    if (cellVal == 0) {
 		prevVal = 0;
 		continue;
@@ -572,9 +564,9 @@ bool moveableUp()
 bool moveableDown()
 {
     for (int x = 0; x < GRID_COLS; x++) {
-	int prevVal = gameGrid[x][GRID_ROWS - 1].val;
+	int prevVal = g_gameState.gameGrid[x][GRID_ROWS - 1].val;
 	for (int y = GRID_ROWS - 2; y >= 0; y--) {
-	    int cellVal = gameGrid[x][y].val;
+	    int cellVal = g_gameState.gameGrid[x][y].val;
 	    if (cellVal == 0) {
 		prevVal = 0;
 		continue;
@@ -590,9 +582,9 @@ bool moveableDown()
 bool moveableLeft()
 {
     for (int y = 0; y < GRID_ROWS; y++) {
-	int prevVal = gameGrid[0][y].val;
+	int prevVal = g_gameState.gameGrid[0][y].val;
 	for (int x = 1; x < GRID_COLS; x++) {
-	    int cellVal = gameGrid[x][y].val;
+	    int cellVal = g_gameState.gameGrid[x][y].val;
 	    if (cellVal == 0) {
 		prevVal = 0;
 		continue;
@@ -608,9 +600,9 @@ bool moveableLeft()
 bool moveableRight()
 {
     for (int y = 0; y < GRID_ROWS; y++) {
-	int prevVal = gameGrid[GRID_COLS - 1][y].val;
+	int prevVal = g_gameState.gameGrid[GRID_COLS - 1][y].val;
 	for (int x = GRID_COLS - 2; x >= 0; x--) {
-	    int cellVal = gameGrid[x][y].val;
+	    int cellVal = g_gameState.gameGrid[x][y].val;
 	    if (cellVal == 0) {
 		prevVal = 0;
 		continue;
@@ -681,7 +673,7 @@ unsigned int getScore()
     unsigned int score = 0;
     for (int x = 0; x < GRID_COLS; x++) {
 	for (int y = 0; y < GRID_ROWS; y++) {
-	    score += gameGrid[x][y].val;
+	    score += g_gameState.gameGrid[x][y].val;
 	}
     }
     return score;
@@ -718,8 +710,8 @@ void SpawnRandomTile()
 
     unsigned int posX = emptyTiles[cellIndex].x;
     unsigned int posY = emptyTiles[cellIndex].y;
-    gameGrid[posX][posY].val = cellValue;
-    gameGrid[posX][posY].anim.current = ANIMSPAWNING;
+    g_gameState.gameGrid[posX][posY].val = cellValue;
+    g_gameState.gameGrid[posX][posY].anim.current = ANIMSPAWNING;
 }
 
 void setScreenSizes()
@@ -757,7 +749,7 @@ void drawAllTiles()
 {
     for (int x = 0; x < GRID_COLS; x++) {
 	for (int y = 0; y < GRID_ROWS; y++) {
-	    gameGrid[x][y].val = powerOfTwo(x + y * GRID_COLS);
+	    g_gameState.gameGrid[x][y].val = powerOfTwo(x + y * GRID_COLS);
 	}
     }
 }
@@ -816,14 +808,24 @@ void processGameOver()
     }
 }
 
+
+
+
+void initState()
+{
+    g_gameState.grid_rows = GRID_ROWS;
+    g_gameState.grid_cols = GRID_COLS;
+}
+
 int main()
 {
-    // randomSeed = time(NULL);  // not need for some reason???
-    // printf("seed: %i\n", randomSeed);
-    SetRandomSeed(randomSeed);
+    initState();
 
     setScreenSizes(); // init to something
     InitWindow(Screen_Width, Screen_Height, "2048");
+
+    //SetRandomSeed(randomSeed); // InitWindow() already sets random seed
+
     InitAudioDevice();
 
     LoadAllSounds();
@@ -836,6 +838,7 @@ int main()
 
     initTiles();
     InitStorage();
+    int loadTestVal = LoadHighScore();
 
     SpawnRandomTile();
     SpawnRandomTile();
@@ -861,6 +864,7 @@ int main()
 		      Cell_Height * GRID_ROWS, map_color(0));
 
 	DrawText(TextFormat("FPS: %i", (int)(1.0f / delta)), 10, 10, 20, WHITE);
+	DrawText(TextFormat("VAL: %i", loadTestVal), 80, 10, 20, WHITE);
 	DrawGameGrid(delta);
 
 	drawScore();
@@ -871,6 +875,7 @@ int main()
 
 	EndDrawing();
     }
+    SaveHighScore(69);
     UnloadAllSounds();
     CloseAudioDevice();
     CloseWindow();
