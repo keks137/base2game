@@ -15,7 +15,8 @@ project("${APP_LIB_NAME}")
 add_subdirectory(${CMAKE_SOURCE_DIR}/deps/raylib)
 add_subdirectory(${CMAKE_SOURCE_DIR}/deps/raymob)
 
-# Fetch all source files for your project (recursively), excluding 'deps' source files
+# Fetch all source files for your project (recursively), excluding 'deps' source
+# files
 file(GLOB_RECURSE SOURCES "${CMAKE_SOURCE_DIR}/*.c" "${CMAKE_SOURCE_DIR}/*.cpp")
 list(FILTER SOURCES EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/deps/.*")
 
@@ -23,7 +24,8 @@ list(FILTER SOURCES EXCLUDE REGEX "${CMAKE_SOURCE_DIR}/deps/.*")
 include_directories(${ANDROID_NDK}/sources/android/native_app_glue/)
 
 # Add android_native_app_glue.c to the source files
-list(APPEND SOURCES ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
+list(APPEND SOURCES
+     ${ANDROID_NDK}/sources/android/native_app_glue/android_native_app_glue.c)
 
 # Create a shared library with game source files
 add_library(${APP_LIB_NAME} SHARED ${SOURCES})
@@ -35,15 +37,17 @@ target_compile_definitions(${APP_LIB_NAME} PRIVATE PLATFORM_ANDROID)
 if(CMAKE_BUILD_TYPE MATCHES "Debug")
     target_compile_definitions(${APP_LIB_NAME} PRIVATE _DEBUG DEBUG)
     set(CMAKE_CXX_FLAGS_DEBUG "-g -fno-limit-debug-info")
-    set(CMAKE_C_FLAGS_DEBUG "-g -fno-limit-debug-info")
+    set(CMAKE_C_FLAGS_DEBUG "-g -O3 -fno-limit-debug-info")
 elseif(CMAKE_BUILD_TYPE MATCHES "Release")
     set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG")
     set(CMAKE_C_FLAGS_RELEASE "-O2 -DNDEBUG")
 endif()
 
 # Include raylib and raymob header files
-target_include_directories(${APP_LIB_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/deps/raylib")
-target_include_directories(${APP_LIB_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/deps/raymob")
+target_include_directories(${APP_LIB_NAME}
+                           PRIVATE "${CMAKE_SOURCE_DIR}/deps/raylib")
+target_include_directories(${APP_LIB_NAME}
+                           PRIVATE "${CMAKE_SOURCE_DIR}/deps/raymob")
 
 # Link required libraries to the native application
 target_link_libraries(${APP_LIB_NAME} raylib raymoblib)
