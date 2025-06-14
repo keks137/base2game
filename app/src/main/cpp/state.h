@@ -4,7 +4,9 @@
 #include "tile.h"
 #include "constants.h"
 #include <inttypes.h>
+#include <stdbool.h>
 typedef struct game_state_t {
+    bool valid;
     uint16_t grid_cols;
     uint16_t grid_rows;
     Tile gameGrid[GRID_COLS][GRID_ROWS];

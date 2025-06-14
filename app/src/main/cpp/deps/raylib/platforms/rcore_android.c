@@ -54,6 +54,7 @@
 #include <jni.h> // Required for: JNIEnv and JavaVM [Used in OpenURL()]
 
 #include <EGL/egl.h> // Native platform windowing system interface
+#include <stdint.h>
 
 //----------------------------------------------------------------------------------
 // Types and Structures Definition
@@ -1122,8 +1123,12 @@ void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 	if (app->savedState != NULL) {
 	    // Copy entire state including 2D array
 	    g_gameState = *(game_state_t *)app->savedState;
-
-	   	}
+	    app->savedState = NULL;
+	    __android_log_print(ANDROID_LOG_INFO, "IDK", "maybe loaded stuff");
+	}else{
+		g_gameState.valid=false;
+	    __android_log_print(ANDROID_LOG_INFO, "IDK", "didn't load stuff");
+	    }
     } break;
     case APP_CMD_GAINED_FOCUS: {
 	platform.appEnabled = true;
@@ -1165,7 +1170,7 @@ void AndroidCommandCallback(struct android_app *app, int32_t cmd)
 	    *state = g_gameState;
 	    app->savedState = state;
 	    app->savedStateSize = sizeof(game_state_t);
-
+	    __android_log_print(ANDROID_LOG_INFO, "IDK", "maybe saved stuff");
 	}
 	break;
     };

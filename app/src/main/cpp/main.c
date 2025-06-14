@@ -112,8 +112,6 @@ typedef struct Movement {
     bool moving;
 } Movement;
 
-
-
 typedef struct Moveable {
     bool left;
     bool right;
@@ -808,9 +806,6 @@ void processGameOver()
     }
 }
 
-
-
-
 void initState()
 {
     g_gameState.grid_rows = GRID_ROWS;
@@ -819,8 +814,6 @@ void initState()
 
 int main()
 {
-    initState();
-
     setScreenSizes(); // init to something
     InitWindow(Screen_Width, Screen_Height, "2048");
 
@@ -836,9 +829,11 @@ int main()
 
     // drawAllTiles();
 
-    initTiles();
+    if (!g_gameState.valid) {
+	initTiles();
+	initState();
+    }
     InitStorage();
-    int loadTestVal = LoadHighScore();
 
     SpawnRandomTile();
     SpawnRandomTile();
@@ -864,7 +859,6 @@ int main()
 		      Cell_Height * GRID_ROWS, map_color(0));
 
 	DrawText(TextFormat("FPS: %i", (int)(1.0f / delta)), 10, 10, 20, WHITE);
-	DrawText(TextFormat("VAL: %i", loadTestVal), 80, 10, 20, WHITE);
 	DrawGameGrid(delta);
 
 	drawScore();
@@ -875,7 +869,6 @@ int main()
 
 	EndDrawing();
     }
-    SaveHighScore(69);
     UnloadAllSounds();
     CloseAudioDevice();
     CloseWindow();
