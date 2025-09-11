@@ -1,3 +1,5 @@
 #!/bin/sh
+set -xe
 
-cmake --build build && ./build/2048
+./nob
+./bin/2to11

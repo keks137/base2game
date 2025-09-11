@@ -23,7 +23,7 @@ bool SaveStorageValue(unsigned int position, int value) {
     unsigned char *newFileData = NULL;
 
     if (fileData != NULL) {
-        if (dataSize <= (position * sizeof(int))) {
+        if (dataSize <= (int)(position * sizeof(int))) {
             // Increase data size up to position and store value
             newDataSize = (position + 1) * sizeof(int);
             newFileData = (unsigned char *)RL_REALLOC(fileData, newDataSize);
