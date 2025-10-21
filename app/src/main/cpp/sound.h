@@ -1,3 +1,4 @@
+#ifdef SOUNDS_ON
 #ifndef INCLUDE_CPP_SOUND_H_
 #define INCLUDE_CPP_SOUND_H_
 
@@ -14,3 +15,4 @@ void PlaySfxPb(SoundID sfxID, float offsetRange);
 void UnloadAllSounds();
 
 #endif // INCLUDE_CPP_SOUND_H_
+#endif //SOUNDS_ON

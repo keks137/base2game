@@ -1,3 +1,5 @@
+#ifdef SOUNDS_ON
+
 #include "sound.h"
 #include "raylib.h"
 #include <stddef.h>
@@ -29,3 +31,4 @@ void PlaySfxPb(SoundID sfxID, float offsetRange) {
     SetSoundPitch(sfx, offset);
     PlaySound(sfx);
 }
+#endif //SOUNDS_ON

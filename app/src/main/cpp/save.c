@@ -110,7 +110,6 @@ int LoadHighScore()
 
 bool saveForReload(game_state_t *state)
 {
-	PlaySfxPb(SFX_MERGE, 0.1);
 	ReloadData reloadData = { 0 };
 	reloadData.version = RELOADDATAVERSION;
 	reloadData.state = *state;
@@ -128,6 +127,9 @@ bool saveForReload(game_state_t *state)
 	success &= fwrite(&reloadData.state.gameGrid, sizeof(reloadData.state.gameGrid), 1, file) == 1;
 
 	fclose(file);
+#ifdef SOUNDS_ON
+	PlaySfxPb(SFX_MERGE, 0.1);
+#endif //SOUNDS_ON
 	TraceLog(LOG_INFO, "saveForReload success: %zu", success);
 	return success;
 }

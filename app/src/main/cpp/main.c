@@ -320,7 +320,9 @@ void MoveRight()
 					prevVal = g_gameState.gameGrid[x][y].val;
 				} else if (prevVal == g_gameState.gameGrid[x][y].val) {
 					g_gameState.gameGrid[writePos][y].val = prevVal * 2;
+#ifdef SOUNDS_ON
 					PlaySfxPb(SFX_MERGE, 0.1);
+#endif //SOUNDS_ON
 					prevVal = -1;
 					writePos--;
 				} else {
@@ -353,7 +355,9 @@ void MoveLeft()
 					prevVal = g_gameState.gameGrid[x][y].val;
 				} else if (prevVal == g_gameState.gameGrid[x][y].val) {
 					g_gameState.gameGrid[writePos][y].val = prevVal * 2;
+#ifdef SOUNDS_ON
 					PlaySfxPb(SFX_MERGE, 0.1);
+#endif //SOUNDS_ON
 					// g_gameState.gameGrid[x][y].mov.targ = (Pos){writePos, y};
 					// g_gameState.gameGrid[x][y].mov.moving = true;
 					// g_gameState.gameGrid[x][y].mov.prog = 0.0;
@@ -389,7 +393,9 @@ void MoveUp()
 					prevVal = g_gameState.gameGrid[x][y].val;
 				} else if (prevVal == g_gameState.gameGrid[x][y].val) {
 					g_gameState.gameGrid[x][writePos].val = prevVal * 2;
+#ifdef SOUNDS_ON
 					PlaySfxPb(SFX_MERGE, 0.1);
+#endif //SOUNDS_ON
 					prevVal = -1;
 					writePos++;
 				} else {
@@ -422,7 +428,9 @@ void MoveDown()
 					prevVal = g_gameState.gameGrid[x][y].val;
 				} else if (prevVal == g_gameState.gameGrid[x][y].val) {
 					g_gameState.gameGrid[x][writePos].val = prevVal * 2;
+#ifdef SOUNDS_ON
 					PlaySfxPb(SFX_MERGE, 0.1);
+#endif //SOUNDS_ON
 					prevVal = -1;
 					writePos--;
 				} else {
@@ -653,7 +661,7 @@ void processInput()
 	if (IsKeyPressed(KEY_O)) {
 		loadReload(&g_gameState);
 	}
-	if (IsKeyPressed(KEY_I )|| IsKeyPressed(KEY_VOLUME_UP)) {
+	if (IsKeyPressed(KEY_I) || IsKeyPressed(KEY_VOLUME_UP)) {
 		saveForReload(&g_gameState);
 	}
 
@@ -835,7 +843,9 @@ int main()
 
 	InitAudioDevice();
 
+#ifdef SOUNDS_ON
 	LoadAllSounds();
+#endif //SOUNDS_ON
 
 	setScreenSizes(); // set actual values
 
@@ -888,7 +898,10 @@ int main()
 
 		EndDrawing();
 	}
+
+#ifdef SOUNDS_ON
 	UnloadAllSounds();
+#endif //SOUNDS_ON
 	CloseAudioDevice();
 	CloseWindow();
 }
