@@ -1,8 +1,11 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define GRID_COLS 8
-#define GRID_ROWS 8
+
+// watch out these are used in the definition of the gamestate struct, which is stupid, but whatever
+#define GRID_COLS 4
+#define GRID_ROWS 4
+
 
 #define MAX_DIGITS 4
 

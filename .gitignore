@@ -57,3 +57,4 @@ bin/*
 test/test_runner
 nob
 nob.old
+.cache

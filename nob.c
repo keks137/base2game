@@ -69,9 +69,11 @@ int main(int argc, char **argv)
 	nob_cc_inputs(&cmd, SRC_FOLDER "main.c");
 	nob_cc_inputs(&cmd, SRC_FOLDER "funny_math.c");
 	nob_cc_inputs(&cmd, SRC_FOLDER "save.c");
+	nob_cc_inputs(&cmd, SRC_FOLDER "sound.c");
 	nob_cc_inputs(&cmd, SRC_FOLDER "platform/linux/getAppStoragePath.c");
 	nob_cmd_append(&cmd, "-DPLATFORM_DESKTOP", "-D_GLFW_X11");
 	nob_cmd_append(&cmd, GLFWIN);
+	nob_cmd_append(&cmd, "-ggdb");
 	nob_cmd_append(&cmd, "-I./" RSOURCE);
 
 	for (int i = 0; i < NOB_ARRAY_LEN(rayfiles); i++) {

@@ -7,9 +7,9 @@ char *GetAppStoragePath() {
     char *path = malloc(256);
 
     if (xdg_data_home) {
-        snprintf(path, 256, "%s/my_app", xdg_data_home);
+        snprintf(path, 256, "%s/twotoeleven", xdg_data_home);
     } else {
-        snprintf(path, 256, "%s/.local/share/my_app", home);
+        snprintf(path, 256, "%s/.local/share/twotoeleven", home);
     }
 
     // Create directory if it doesn't exist
