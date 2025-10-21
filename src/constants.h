@@ -1,8 +1,8 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define GRID_COLS 4
-#define GRID_ROWS 4
+#define GRID_COLS 8
+#define GRID_ROWS 8
 
 #define MAX_DIGITS 4
 

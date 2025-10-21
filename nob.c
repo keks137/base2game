@@ -9,8 +9,14 @@
 #define GLFWIN "-I./raylib/src/external/glfw/include"
 
 const char *rayfiles[] = {
-	"raudio",  "rcore", "rglfw",	 "rmodels",
-	"rshapes", "rtext", "rtextures", "utils",
+	"raudio",
+	"rcore",
+	"rglfw",
+	"rmodels",
+	"rshapes",
+	"rtext",
+	"rtextures",
+	"utils",
 };
 
 bool build_raylib(Nob_Cmd *cmd)
@@ -22,7 +28,7 @@ bool build_raylib(Nob_Cmd *cmd)
 		return false;
 	}
 
-	for (size_t i = 0; i < NOB_ARRAY_LEN(rayfiles); ++i) {
+	for (size_t i = 0; i < NOB_ARRAY_LEN(rayfiles); ++i) { // from https://github.com/tsoding/musializer
 		const char *input_path =
 			nob_temp_sprintf(RSOURCE "%s.c", rayfiles[i]);
 		const char *output_path =

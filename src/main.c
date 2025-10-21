@@ -118,7 +118,7 @@ typedef struct Tile {
 
 Tile initTile = {
 	.val = 0,
-	.anim = {ANIMNONE,0},
+	.anim = { ANIMNONE, 0 },
 	.scale = 1.0,
 };
 
