@@ -1,21 +1,14 @@
 #include "save.h"
 #include "asserts.h"
-#include "deps/raymob/raymob.h"
+#include "platform/storagePath.h"
+#include "sound.h"
+#include <raylib.h>
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
-#include <android/log.h>
-
-#define LOG_TAG "MyNativeTag"
-#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
-#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
-
-// ...
-
-static pthread_mutex_t storageMutex = PTHREAD_MUTEX_INITIALIZER;
 static char *highScoreFileName = "storage.data";
 static char *reloadFileName = "state.data";
 
@@ -30,10 +23,10 @@ bool initFile(char *fileName)
 		fopen(fileName, "ab+");
 	if (file) {
 		fclose(file);
-		LOGD("Storage initialized at: %s", fileName);
+		TraceLog(LOG_INFO, "Storage initialized at: %s", fileName);
 		return true;
 	} else {
-		LOGE("Failed to create storage file: %s", fileName);
+		TraceLog(LOG_ERROR, "Failed to create storage file: %s", fileName);
 		return false;
 	}
 }
@@ -43,7 +36,7 @@ bool InitStorage()
 	if (!storageInitialized) {
 		const char *basePath = GetAppStoragePath();
 		if (!basePath) {
-			LOGE("Storage path unavailable");
+			TraceLog(LOG_ERROR, "Storage path unavailable");
 			return false;
 		}
 
@@ -92,7 +85,7 @@ int BadReadVal()
 	if (file_ptr == NULL) {
 		perror("Error opening file for reading in binary");
 
-		LOGD("Error opening file for reading in binary: %s", highScoreFile);
+		TraceLog(LOG_ERROR, "Error opening file for reading in binary: %s", highScoreFile);
 		return -1;
 	}
 	size_t elements_read = fread(&val, sizeof(int), vals_to_read, file_ptr);
@@ -101,7 +94,7 @@ int BadReadVal()
 		perror("Error reading integer in binary");
 	}
 	fclose(file_ptr);
-	LOGD("Val: %i\n", val);
+	TraceLog(LOG_INFO, "Val: %i\n", val);
 	return val;
 }
 
@@ -117,13 +110,16 @@ int LoadHighScore()
 
 bool saveForReload(game_state_t *state)
 {
+	PlaySfxPb(SFX_MERGE, 0.1);
 	ReloadData reloadData = { 0 };
 	reloadData.version = RELOADDATAVERSION;
 	reloadData.state = *state;
 	FILE *file = fopen(reloadFile, "wb");
-	if (!file)
+	if (!file) {
+		TraceLog(LOG_ERROR, "couldn't open reload file: %s", reloadFile);
 		return false;
-
+	}
+	TraceLog(LOG_INFO, "reloadData grid_cols: %zu", reloadData.state.grid_cols);
 	bool success = true;
 	success &= fwrite(&reloadData.version, sizeof(reloadData.version), 1, file) == 1;
 	success &= fwrite(&reloadData.state.valid, sizeof(reloadData.state.valid), 1, file) == 1;
@@ -132,6 +128,7 @@ bool saveForReload(game_state_t *state)
 	success &= fwrite(&reloadData.state.gameGrid, sizeof(reloadData.state.gameGrid), 1, file) == 1;
 
 	fclose(file);
+	TraceLog(LOG_INFO, "saveForReload success: %zu", success);
 	return success;
 }
 
@@ -144,15 +141,30 @@ bool loadReload(game_state_t *state)
 
 	bool success = true;
 	success &= fread(&reloadData.version, sizeof(reloadData.version), 1, file) == 1;
-	assert(reloadData.version == RELOADDATAVERSION);
+	if (reloadData.version != RELOADDATAVERSION) {
+		TraceLog(LOG_ERROR, "RELOADDATAVERSION mismatch");
+		success = false;
+	}
+	success &= fread(&reloadData.state.valid, sizeof(reloadData.state.valid), 1, file) == 1;
+	if (!reloadData.state.valid) {
+		TraceLog(LOG_ERROR, "Loaded state invalid");
+	}
+
 	success &= fread(&reloadData.state.grid_cols, sizeof(reloadData.state.grid_cols), 1, file) == 1;
-	assert(reloadData.state.grid_cols == GRID_COLS);
+	if (reloadData.state.grid_cols != state->grid_cols) {
+		TraceLog(LOG_ERROR, "GRID_COLS mismatch");
+		success = false;
+	}
 	success &= fread(&reloadData.state.grid_rows, sizeof(reloadData.state.grid_rows), 1, file) == 1;
-	assert(reloadData.state.grid_rows == GRID_ROWS);
+	if (reloadData.state.grid_rows != state->grid_rows) {
+		TraceLog(LOG_ERROR, "GRID_ROWS mismatch, expected %zu, got %zu", state->grid_rows, reloadData.state.grid_rows);
+		success = false;
+	}
 	success &= fread(&reloadData.state.gameGrid, sizeof(reloadData.state.gameGrid), 1, file) == 1;
 
 	fclose(file);
 
+	TraceLog(LOG_INFO, "loadReload success: %zu", success);
 	if (!success) {
 		return false;
 	}

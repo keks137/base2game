@@ -1,10 +1,8 @@
 #include "tile.h"
 #include "state.h"
 #include "constants.h"
-#include "deps/raymob/raymob.h"
-#include <android/log.h>
+#include <raylib.h>
 #include "funny_math.h"
-#include <android_native_app_glue.h>
 #include "raylib.h"
 #include "save.h"
 #include "sound.h"
@@ -13,6 +11,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <raymob.h>
 // #include <time.h>
 
 enum {
@@ -526,21 +525,13 @@ bool downInput()
 
 void autoMovement()
 {
-	bool moved = false;
 	// printf("Automove: %i\n", autoMove);
 	if (isMoveable.left) {
 		MoveLeft();
-		moved = true;
 	} else if (isMoveable.down) {
 		MoveDown();
-		moved = true;
-	} else if (isMoveable.right) {
-		MoveRight();
-		moved = true;
 	}
-	if (moved) {
-		SpawnRandomTile();
-	}
+	SpawnRandomTile();
 }
 
 bool moveableUp()
@@ -657,6 +648,13 @@ void processInput()
 	}
 	if (IsKeyPressed(KEY_F12)) {
 		setScreenSizes();
+	}
+
+	if (IsKeyPressed(KEY_O)) {
+		loadReload(&g_gameState);
+	}
+	if (IsKeyPressed(KEY_I )|| IsKeyPressed(KEY_VOLUME_UP)) {
+		saveForReload(&g_gameState);
 	}
 
 	if (somethingMoved) {
@@ -815,6 +813,14 @@ void initState()
 }
 void stopCallback()
 {
+	TraceLog(LOG_INFO, "Stopped");
+	if (!saveForReload(&g_gameState)) {
+		TraceLog(LOG_ERROR, "Couldn't saveForReload");
+	}
+}
+void pauseCallback()
+{
+	TraceLog(LOG_INFO, "Paused");
 	if (!saveForReload(&g_gameState)) {
 		TraceLog(LOG_ERROR, "Couldn't saveForReload");
 	}
@@ -822,7 +828,8 @@ void stopCallback()
 int main()
 {
 	setScreenSizes(); // init to something
-	InitWindow(Screen_Width, Screen_Height, "2048");
+	InitWindow(0, 0, "2048");
+	TraceLog(LOG_INFO, "Time: %f", GetTime());
 
 	//SetRandomSeed(randomSeed); // InitWindow() already sets random seed
 
@@ -845,8 +852,11 @@ int main()
 	SpawnRandomTile();
 	SpawnRandomTile();
 
+	InitCallBacks();
 	loadReload(&g_gameState);
 	SetOnStopCallBack(&stopCallback);
+	SetOnPauseCallBack(&pauseCallback);
+
 	while (!WindowShouldClose()) {
 		float delta = GetFrameTime();
 		// printf("delta: %f\n", delta);
