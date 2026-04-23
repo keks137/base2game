@@ -3,8 +3,8 @@
 
 #include "tile.h"
 #include "constants.h"
-#include <inttypes.h>
 #include <stdbool.h>
+#include <stdint.h>
 typedef struct game_state_t {
     bool valid;
     uint16_t grid_cols;

@@ -1,4 +1,5 @@
 #include "tile.h"
+#include "platform.h"
 #include "state.h"
 #include "constants.h"
 #include <raylib.h>
@@ -11,7 +12,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <raymob.h>
+
 // #include <time.h>
 
 enum {
@@ -819,20 +820,6 @@ void initState()
 	g_gameState.grid_rows = GRID_ROWS;
 	g_gameState.grid_cols = GRID_COLS;
 }
-void stopCallback()
-{
-	TraceLog(LOG_INFO, "Stopped");
-	if (!saveForReload(&g_gameState)) {
-		TraceLog(LOG_ERROR, "Couldn't saveForReload");
-	}
-}
-void pauseCallback()
-{
-	TraceLog(LOG_INFO, "Paused");
-	if (!saveForReload(&g_gameState)) {
-		TraceLog(LOG_ERROR, "Couldn't saveForReload");
-	}
-}
 int main()
 {
 	setScreenSizes(); // init to something
@@ -862,10 +849,8 @@ int main()
 	SpawnRandomTile();
 	SpawnRandomTile();
 
-	InitCallBacks();
+	PlatformInits();
 	loadReload(&g_gameState);
-	SetOnStopCallBack(&stopCallback);
-	SetOnPauseCallBack(&pauseCallback);
 
 	while (!WindowShouldClose()) {
 		float delta = GetFrameTime();
